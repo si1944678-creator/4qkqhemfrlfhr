@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>활동 기록 아카이브</title>
+
+<style>
+:root{
+  --blue:#1565c0;
+  --red:#c62828;
+  --black:#111;
+  --white:#fff;
+  --gray:#f2f2f2;
+}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:var(--gray);
+  color:var(--black);
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+
+h1{
+  margin-bottom:10px;
+}
+
+.subtitle{
+  font-size:14px;
+  color:#555;
+}
+
+.record{
+  background:var(--white);
+  padding:16px;
+  margin-bottom:14px;
+  border-radius:8px;
+  animation:fadeUp .4s ease;
+}
+
+.record.blue{border-left:6px solid var(--blue);}
+.record.red{border-left:6px solid var(--red);}
+.record.white{border-left:6px solid #bbb;}
+.record.black{border-left:6px solid var(--black);}
+
+.record h3{margin:0;}
+.date{font-size:12px;color:#666;}
+
+.media img,.media video{
+  max-width:100%;
+  margin-top:8px;
+  border-radius:4px;
+}
+
+.books{
+  display:flex;
+  gap:10px;
+  margin:20px 0;
+  flex-wrap:wrap;
+}
+
+.book{
+  flex:1;
+  min-width:120px;
+  padding:14px;
+  border-radius:8px;
+  color:white;
+  text-align:center;
+  cursor:pointer;
+  transition:transform .2s;
+}
+
+.book:hover{transform:translateY(-4px);}
+
+.blue{background:var(--blue);}
+.red{background:var(--red);}
+.white{background:#ddd;color:#111;}
+.black{background:var(--black);}
+
+#editor,#passwordBox{display:none;}
+
+input,textarea{
+  width:100%;
+  padding:8px;
+  margin-top:8px;
+}
+
+button{
+  margin-top:10px;
+  padding:8px 14px;
+  border:none;
+  background:var(--black);
+  color:white;
+  cursor:pointer;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:none;}
+}
+
+@media(max-width:600px){
+  .books{flex-direction:column;}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>활동 기록</h1>
+<div class="subtitle">날짜순 기록 아카이브</div>
+
+<div id="records"></div>
+
+<h3>작성자 선택</h3>
+<div class="books">
+  <div class="book blue" onclick="selectUser('돌고래')">📘 돌고래</div>
+  <div class="book red" onclick="selectUser('마레')">📕 마레</div>
+  <div class="book white" onclick="selectUser('닉만20분째')">📗 닉만20분째</div>
+  <div class="book black" onclick="selectUser('소영쿵야')">📓 소영쿵야</div>
+</div>
+
+<div id="passwordBox">
+  <input type="password" id="pw" placeholder="비밀번호">
+  <button onclick="checkPw()">확인</button>
+</div>
+
+<div id="editor">
+  <textarea id="content" rows="4" placeholder="활동 내용"></textarea>
+  <input type="file" id="file" multiple>
+  <button onclick="addRecord()">기록 저장</button>
+
+  <h4>비밀번호 변경</h4>
+  <input type="password" id="oldPw" placeholder="기존 비밀번호">
+  <input type="password" id="newPw" placeholder="새 비밀번호">
+  <button onclick="changePw()">비밀번호 변경</button>
+</div>
+</div>
+
+<script>
+const users={
+  "돌고래":{color:"blue",pw:"1234"},
+  "마레":{color:"red",pw:"1234"},
+  "닉만20분째":{color:"white",pw:"1234"},
+  "소영쿵야":{color:"black",pw:"1234"}
+};
+
+let currentUser=null;
+
+function loadUsers(){
+  const saved=JSON.parse(localStorage.getItem("users"));
+  if(saved) Object.assign(users,saved);
+}
+loadUsers();
+
+function saveUsers(){
+  localStorage.setItem("users",JSON.stringify(users));
+}
+
+function loadRecords(){
+  const r=JSON.parse(localStorage.getItem("records")||"[]")
+    .sort((a,b)=>b.time-a.time);
+  const box=document.getElementById("records");
+  box.innerHTML="";
+  r.forEach(e=>{
+    box.innerHTML+=`
+      <div class="record ${users[e.user].color}">
+        <h3>${e.user}</h3>
+        <div class="date">${new Date(e.time).toLocaleString()}</div>
+        <p>${e.text}</p>
+      </div>`;
+  });
+}
+loadRecords();
+
+function selectUser(u){
+  currentUser=u;
+  document.getElementById("passwordBox").style.display="block";
+}
+
+function checkPw(){
+  if(document.getElementById("pw").value===users[currentUser].pw){
+    document.getElementById("editor").style.display="block";
+  }else alert("비밀번호 오류");
+}
+
+function addRecord(){
+  const records=JSON.parse(localStorage.getItem("records")||"[]");
+  records.push({
+    user:currentUser,
+    text:content.value,
+    time:Date.now()
+  });
+  localStorage.setItem("records",JSON.stringify(records));
+  loadRecords();
+}
+
+function changePw(){
+  if(oldPw.value!==users[currentUser].pw){
+    alert("기존 비밀번호 틀림");return;
+  }
+  users[currentUser].pw=newPw.value;
+  saveUsers();
+  alert("비밀번호 변경 완료");
+}
+</script>
+</body>
+</html>
